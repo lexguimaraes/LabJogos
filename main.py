@@ -37,7 +37,6 @@ listaProj = []
 cd = 0
 
 def Proj(player,listaProjeteis):
-    # Crio o projetil
     projetil = Sprite("projetil2.png",1)
     projetil.x = player.x + 50
     projetil.y = player.y - projetil.height

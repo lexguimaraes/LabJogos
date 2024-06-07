@@ -1,6 +1,10 @@
 from PPlay.window import *
 from PPlay.sprite import *
 import menu
+import random
+
+
+
 def play():
     janela = Window(1000, 700)
     janela.set_title("Space invaders")
@@ -13,11 +17,14 @@ def play():
     fundo = Sprite("fundo.png",1)
     teclado = Window.get_keyboard()
     matrizi=[]
-    movi = 400
+    movi = 200
     pont = 0
-    
-    
-
+    Lista_ProjInimigo = [] 
+    vida = 3
+    delayi = 3
+    piscou = False
+    delay = 0
+    hurt = False
 
 
     def Proj(player,listaProjeteis):
@@ -68,6 +75,7 @@ def play():
                 for j in i:
                   j.y+=40
                   if j.y > janela.height - j.height-10:
+                      j.y=0
                       menu.menu()
                       
 
@@ -82,9 +90,49 @@ def play():
                         pont+=1
         return pont  
     spawn(3,5,matrizi)    
+    
+    def damage(listaproji,player,vida,hurt):
+        print(hurt)
+        for k in listaproji:
+            if k.collided(player) and (not hurt):
+                listaproji.remove(k)
+                vida-=1
+                hurt = True
+                if vida <= 0:
+                    menu.menu()
+        return vida,hurt
+    
+    def ProjInimigo(inimigo,listaProjInimigos):
+        projetilInimigo = Sprite("projetil2.png",1)
+        projetilInimigo.x = inimigo.x + 50
+        projetilInimigo.y = inimigo.y + projetilInimigo.height + 50
+        if (random.random() < 0.5 and len(listaProjInimigos)==0):
+            listaProjInimigos.append(projetilInimigo)
+            
+            
+    def TiroIni(janela: Window,listaProjInimigos):
+        for tiro in listaProjInimigos:
+            tiro.y+=300*janela.delta_time()
+            tiro.draw()
+            if (tiro.y>janela.height):
+                listaProjInimigos.remove(tiro)
+            
+        
     while True:
         fundo.draw()
-        player.draw()
+       # print(delay, piscou)
+        if(not piscou):
+            player.draw()
+            if delay>0:
+                piscou = True
+                delay-=janela.delta_time()
+        else:
+            if delay > 0:
+                piscou = False
+                delay-=janela.delta_time()
+        if (delay <= 0):
+            piscou = False
+            hurt = False
         draw(matrizi)
         if (teclado.key_pressed("A") or teclado.key_pressed("LEFT")):
             player.x -= 300 * janela.delta_time()
@@ -97,8 +145,20 @@ def play():
         if (teclado.key_pressed("SPACE") and cd<=0):
             Proj(player,listaProj)
             cd = 3    
+        if (delayi>0):
+            delayi-=1
+        if (delayi==0):
+            for i in matrizi:
+                for j in i:
+                    ProjInimigo(j,Lista_ProjInimigo)
+            delayi = 7
         cd-=5*janela.delta_time()
         tiroPlayer(janela,listaProj)
+        vida,hurt = damage(Lista_ProjInimigo,player,vida,hurt)
+        if (hurt) and (delay<=0):
+            delay = 2
+            piscou = True
+        TiroIni(janela,Lista_ProjInimigo)
         pont = killi(listaProj,matrizi,pont)
         movi = movei(movi,matrizi,janela)
         
@@ -106,4 +166,5 @@ def play():
             menu.menu()
             return
         janela.draw_text((str(pont)), (janela.width / 2)-225, 100, size=48, font_name="Arial", bold=True,color=[200, 200, 255])  
+        janela.draw_text("vida: " + str(vida),0,0,size = 30,color = (0,0,255))
         janela.update()
